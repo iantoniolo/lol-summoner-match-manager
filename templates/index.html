@@ -10,15 +10,16 @@
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">Insert summoner name:</h1>
-        <form method="post" action="/match-history" class="needs-validation" novalidate>
+        <form method="post" action="/matches" class="needs-validation" novalidate>
             <div class="mb-3">
                 <input type="text" class="form-control" id="summoner_name" name="summoner_name" required>
                 <div class="invalid-feedback">
                     Please, insert a summoner name
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Enviar</button>
+            <button class="btn btn-primary" type="submit">Search</button>
         </form>
     </div>
 </body>
 </html>
+<script src="/static/script.js"></script>

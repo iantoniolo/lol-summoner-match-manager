@@ -1,46 +1,44 @@
-from fastapi import FastAPI, HTTPException
-
-from typing import List
-
-from bson import ObjectId
 from pymongo import MongoClient
-from config.settings import CLUSTER_URI
+from pymongo.errors import DuplicateKeyError
 
 from ..models.player_history import PlayerHistory
-
-app = FastAPI()
+from ..config.settings import CLUSTER_URI
 
 client = MongoClient(CLUSTER_URI)
 db = client.lol_db
-players_history_collection = db.players_history
+matches_collection = db.players_history
 
-# Criar um novo item no banco de dados
-@app.post("/history-player/", response_model=PlayerHistory)
-async def register_match(item: PlayerHistory):
-    new_match = {"name": item.name, "description": item.description}
-    result = players_history_collection.insert_one(new_match)
-    created_match = players_history_collection.find_one({"_id": result.inserted_id})
-    return created_match
+def favorite_match(match_id: str, summoner_name: str, map: str, champion_played: str, victory_or_defeat: str, kda: str):
+    try:
+        match_data = {
+             "match_id": match_id, 
+             "summoner_name": summoner_name, 
+             "map": map, 
+             "champion_played": champion_played, 
+             "victory_or_defeat": victory_or_defeat,
+             "kda": kda
+             }
+        matches_collection.insert_one(match_data)
+        return {"message": "Match favorited successfully"}
+    except DuplicateKeyError:
+        return {"error": "Match is already favorited"}
 
-# Obter todos os itens do banco de dados
-@app.get("/history-player/", response_model=List[PlayerHistory])
-async def get_matches(skip: int = 0, limit: int = 10):
-    matches = list(players_history_collection.find().skip(skip).limit(limit))
-    return matches
+def delete_match(match_id: str, summoner_name: str):
+    matches_collection.delete_one({"match_id": match_id, "summoner_name": summoner_name})
+    return {"message": "Match deleted successfully"}
 
-# Obter um item específico por ID
-@app.get("/history-player/{player_id}/", response_model=PlayerHistory)
-async def get_matches_by_id(player_id: str):
-    match = players_history_collection.find_one({"_id": ObjectId(player_id)})
-    if match is None:
-        raise HTTPException(status_code=404, detail="match not found")
-    return match
+def get_favorite_matches(summoner_name: str):
+    favorite_matches = matches_collection.find({"summoner_name": summoner_name})
 
-# Excluir um item específico por ID
-@app.delete("/history-player/{player_id}/", response_model=PlayerHistory)
-async def delete_match(player_id: str):
-    match = players_history_collection.find_one({"_id": ObjectId(player_id)})
-    if match is None:
-        raise HTTPException(status_code=404, detail="match not found")
-    result = players_history_collection.delete_one({"_id": ObjectId(player_id)})
-    return match
+    favorite_matches_data = []
+
+    for match in favorite_matches:
+        match_data = {
+            "map": match["map"],
+            "champion_played": match["champion_played"],
+            "victory_or_defeat": match["victory_or_defeat"],
+            "kda": match["kda"],
+        }
+        favorite_matches_data.append(PlayerHistory(**match_data))
+
+    return favorite_matches_data

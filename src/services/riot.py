@@ -11,10 +11,10 @@ def get_summoner_uuid(summoner_name: str):
         uuid = data["puuid"]
         return uuid
     else:
-        return {"error": "Erro ao obter dados do invocador"}
+        return {"error": "Error getting data from summoner"}
     
 def get_matches_history(uuid: str):
-    url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{uuid}/ids?start=0&count=3&api_key={RIOT_APY_KEY}"
+    url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{uuid}/ids?start=0&count=20&api_key={RIOT_APY_KEY}"
     response = requests.get(url)
 
     if response.status_code == 200:
